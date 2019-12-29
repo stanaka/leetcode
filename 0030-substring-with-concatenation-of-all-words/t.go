@@ -4,10 +4,9 @@ package main
 
 // TrieNode ...
 type TrieNode struct {
-	C     rune
 	Num   int
 	Count int
-	Next  []*TrieNode
+	Next  map[rune]*TrieNode
 }
 
 // Track ...
@@ -19,17 +18,14 @@ type Track struct {
 }
 
 func findChild(r *TrieNode, c rune) *TrieNode {
-	for _, n := range r.Next {
-		if n.C == c {
-			//fmt.Printf("found!! %v\n", n)
-			return n
-		}
+	if v, ok := r.Next[c]; ok {
+		return v
 	}
 	return nil
 }
 
 func createTrie(words *[]string) (*TrieNode, map[int]int) {
-	t := &TrieNode{}
+	t := &TrieNode{0, 0, map[rune]*TrieNode{}}
 	res := map[int]int{}
 	for index, w := range *words {
 		i := t
@@ -38,8 +34,8 @@ func createTrie(words *[]string) (*TrieNode, map[int]int) {
 			if n != nil {
 				i = n
 			} else {
-				i.Next = append(i.Next, &TrieNode{c, 0, 0, nil})
-				i = i.Next[len(i.Next)-1]
+				i.Next[c] = &TrieNode{0, 0, map[rune]*TrieNode{}}
+				i = i.Next[c]
 			}
 		}
 		if i.Count == 0 {
@@ -71,6 +67,10 @@ func findSubstring(s string, words []string) []int {
 	}*/
 	tracks := []*Track{}
 
+	lastPos := len(s)
+	if len(words) > 0 {
+		lastPos -= (len(words) - 1) * len(words[0])
+	}
 	for p, r := range s {
 		for _, t := range tracks {
 			if t.T == nil {
@@ -91,6 +91,9 @@ func findSubstring(s string, words []string) []int {
 			} else {
 				t.T = nil
 			}
+		}
+		if p > lastPos {
+			continue
 		}
 		i := findChild(root, r)
 		if i != nil {
